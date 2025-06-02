@@ -9,7 +9,6 @@ from folium.plugins import Draw
 from streamlit_folium import st_folium
 import pandas as pd
 import numpy as np
-from osgeo import gdal
 import io
 from rasterio import MemoryFile
 from rasterio.transform import from_origin
@@ -364,6 +363,9 @@ with st.container():
             mime="application/zip")
     else:
         st.info("Please draw an area on the map.")
+
+
+
 
 
 
