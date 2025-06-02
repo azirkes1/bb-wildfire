@@ -1,1 +1,17 @@
 streamlit
+ee
+google.oauth2
+geemap
+json
+folium 
+folium.plugins
+streamlit_folium 
+pandas
+numpy
+osgeo
+io
+rasterio
+rasterio.transform
+PIL
+collections.abc
+zipfile
