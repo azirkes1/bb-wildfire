@@ -5,7 +5,7 @@ geemap
 json
 folium 
 folium.plugins
-streamlit_folium 
+streamlit-folium 
 pandas
 numpy
 osgeo
