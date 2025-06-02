@@ -1,5 +1,5 @@
 streamlit
-ee
+earthengine-api
 google.oauth2
 geemap
 json
