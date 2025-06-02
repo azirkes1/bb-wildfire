@@ -6,6 +6,5 @@ folium
 streamlit-folium
 pandas
 numpy
-gdal
 rasterio
 Pillow
