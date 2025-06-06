@@ -1,0 +1,23 @@
+name: Scheduled Empty Commit
+
+on:
+  schedule:
+    # Runs every 10 hours
+    - cron: '0 */10 * * *'
+  workflow_dispatch:
+
+jobs:
+  empty-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create empty commit
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git commit --allow-empty -m "Scheduled empty commit [skip ci]"
+          git push
