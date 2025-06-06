@@ -22,4 +22,4 @@ jobs:
           git add .  # Stage changes (empty commit counts as a change)
           git commit --allow-empty -m "Scheduled empty commit [skip ci]"
           git pull --rebase  # Ensure you're up to date with remote
-          git push origin HEAD:${{ github.ref_name }}  # Push to current branch
+          git push origin HEAD:${{ main }}  # Push to current branch
