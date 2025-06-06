@@ -2,8 +2,8 @@ name: Scheduled Empty Commit
 
 on:
   schedule:
-    - cron: '0 */10 * * *'  # Every 10 hours
-  workflow_dispatch:         # Allow manual triggers
+    - cron: '0 */10 * * *'  # Runs every 10 hours (UTC)
+  workflow_dispatch:         # Allows manual triggering
 
 jobs:
   empty-commit:
@@ -13,11 +13,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}  # Critical for write access
+          token: ${{ secrets.GITHUB_TOKEN }}  # Grants write permissions
 
       - name: Create empty commit
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+          git add .  # Stage changes (empty commit counts as a change)
           git commit --allow-empty -m "Scheduled empty commit [skip ci]"
-          git push origin HEAD:main  # Explicitly push to 'main' branch
+          git pull --rebase  # Ensure you're up to date with remote
+          git push origin HEAD:${{ github.ref_name }}  # Push to current branch
