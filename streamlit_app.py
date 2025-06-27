@@ -650,7 +650,10 @@ with st.container():
                 return image
 
             #load font 
-            font = ImageFont.truetype(font_path or "arial.ttf", font_size) 
+            try:
+                font = ImageFont.truetype(font_path or "arial.ttf", font_size)
+            except OSError:
+                font = ImageFont.load_default()
             temp_draw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
 
             #text wrapping 
