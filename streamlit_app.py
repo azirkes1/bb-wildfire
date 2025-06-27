@@ -334,7 +334,7 @@ with st.container():
         st.session_state["drawn_features_committed"] = []
 
     #create folium map 
-    m = folium.Map(location=[59, -157],control_scale = True, zoom_start=7, attr_control=False)
+    m = folium.Map(location=[59, -157],control_scale = True, zoom_start=6, attr_control=False)
     
     #add satellite imagery 
     folium.TileLayer(
