@@ -31,10 +31,10 @@ from rasterio.crs import CRS
 from PIL import ImageDraw, ImageFont
 from matplotlib_scalebar.scalebar import ScaleBar
 from rasterio.warp import calculate_default_transform, reproject, Resampling
-from rasterio.warp import calculate_default_transform
 import streamlit as st
 import requests
 import geopandas as gpd
+from folium.plugins import MarkerCluster
 # ---------------------------------------------------------
 #  authorize Google Earth Engine 
 # ---------------------------------------------------------
@@ -334,7 +334,7 @@ with st.container():
         st.session_state["drawn_features_committed"] = []
 
     #create folium map 
-    m = folium.Map(location=[59, -157],control_scale = True, zoom_start=6, attr_control=False)
+    m = folium.Map(location=[58.5, -157],control_scale = True, zoom_start=6, attr_control=False)
     
     #add satellite imagery 
     folium.TileLayer(
@@ -367,8 +367,12 @@ with st.container():
     }
     response = requests.get(feature_server_url, params=params)
     vector_data = response.json()
+    
+   #add cluster to manage many popups
+    cluster = MarkerCluster(name="Native Place Names")
+    cluster.add_to(m)
 
-    #add Place Names as CircleMarkers with popups
+    #add markers directly to the cluster 
     for feature in vector_data['features']:
         props = feature['properties']
         geom = feature['geometry']
@@ -379,17 +383,30 @@ with st.container():
         <b>Language:</b> {props.get('PN_Languag', 'N/A')}<br>
         <b>Type:</b> {props.get('Type', 'N/A')}
         """
+
         folium.CircleMarker(
             location=[lat, lon],
             radius=6,
             color="cornflowerblue",
-            stroke=False,
             fill=True,
             fill_opacity=0.6,
-            popup=folium.Popup(popup_html, max_width=300),
-            tooltip=props.get('Place_Name', '')
-        ).add_to(m)
+            tooltip=props.get('Place_Name', ''),
+            popup=folium.Popup(popup_html, max_width=300)
+        ).add_to(cluster)
 
+    draw = Draw(
+            draw_options={
+                "polyline": False,
+                "circle": False,
+                "circlemarker": False,
+                "marker": False,
+                "rectangle": True,
+                "polygon": False,
+            },
+            edit_options={"edit": True, "remove": True},
+        )
+    draw.add_to(m)
+        
     #add drawings to map
     for feature in st.session_state["drawn_features_committed"]:
         folium.GeoJson(feature, name="Drawn Feature").add_to(m)
@@ -409,23 +426,12 @@ with st.container():
             'fillOpacity': 0,
         }
     ).add_to(m)
-    
-    #add drawing tools
-    draw = Draw(
-        draw_options={
-            "polyline": False,
-            "circle": False,
-            "circlemarker": False,
-            "marker": False,
-            "rectangle": True,
-            "polygon": False,
-        },
-        edit_options={"edit": True, "remove": True},
-    )
-    draw.add_to(m)
+
+    #add layer toggle control
+    folium.LayerControl(collapsed=False).add_to(m)
     
     #render map and capture drawing events
-    map_result = st_folium(m, height=600, width=800, returned_objects=["all_drawings"])
+    map_result = st_folium(m, height=500, width=700, returned_objects=["all_drawings"])
 
     #store all drawing data temporarily, but do NOT update committed data yet
     if map_result and map_result.get("all_drawings"):
@@ -1128,7 +1134,6 @@ with st.container():
 
     else:
         st.warning("No drawings found. Please draw on the map first.")
-
 
 
 
