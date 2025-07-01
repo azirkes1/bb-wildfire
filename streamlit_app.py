@@ -94,6 +94,23 @@ with st.container():
         section[data-testid="stSidebar"] > div {
             overflow: hidden !important;
         }
+                
+        /* Force iframe height and remove default margin */
+        iframe {
+            height: 500px !important;
+            display: block;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        /* Hide extra container spacing */
+        .element-container:has(.folium-map),
+        .block-container,
+        .main {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -992,40 +1009,34 @@ with st.container():
     # access draw data and combine clipped data into zip folder
     # ---------------------------------------------------------
     
-    #error if no filetype selected
-    if not selected_filetype:
-        st.error("Please select a file format.")
+    if (
+    selected_filetype
+    and any(ft.strip() for ft in selected_filetype)
+    and selected_options
+    and any(opt.strip() for opt in selected_options)
+    and map_result.get("all_drawings")
+    ):
+        
+        all_drawings = map_result["all_drawings"]
+        last_drawing = all_drawings[-1]
+        geometry = last_drawing.get("geometry")
 
-    #error if no data layer selected
-    if not selected_options: 
-        st.error("Please select a data layer.")
-
-    #access drawings
-    all_drawings = map_result.get("all_drawings", [])
-    
-    #error if no drawings, access last drawing, geometry, and polygon
-    if all_drawings:
-        last_drawing = all_drawings[-1]  # get the last drawn shape
-        geometry = last_drawing.get("geometry", None)
         if geometry is None:
             st.error("Please draw a rectangle boundary on the map.")
-        else:
-            polygon = ee.Geometry.Polygon(geometry["coordinates"])
+            st.stop()
 
-        #get bbnc geometry
+        polygon = ee.Geometry.Polygon(geometry["coordinates"])
+
+        # Check if within BBNC
         bbnc_geom = bbnc.geometry()
-
-        #error if drawing is outside BBNC boundary 
         if not bbnc_geom.contains(polygon).getInfo():
             st.error("Your drawing is outside the BBNC boundary. Please draw within the designated area.")
             st.stop()
 
-        #set up memory objects
-        zip_buffer = None  # default to None
+        # --- ZIP + download logic ---
         zip_buffer = io.BytesIO()
         all_metadata = []
 
-        #zip file creation 
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as z:
             for layer_name in selected_options:
                 layer_name = layer_name.strip()
@@ -1039,25 +1050,27 @@ with st.container():
                 if txt_bytes:
                     decoded = txt_bytes.decode("utf-8")
                     all_metadata.append(decoded)
-            
-            #add metadata file 
+
             if all_metadata:
                 joined_metadata = "\n\n".join(all_metadata)
                 z.writestr("metadata.txt", joined_metadata.encode("utf-8"))
-                
+
         zip_buffer.seek(0)
 
-        #create download button
         st.download_button(
             label="Download Files",
             data=zip_buffer,
             file_name="BristolBay_Wildfire.zip",
             mime="application/zip"
         )
-
     else:
-        st.error("Please draw a rectangle on the map.")
-
+        # Handle specific errors here for clarity
+        if not selected_filetype or all(ft.strip() == "" for ft in selected_filetype):
+            st.error("Please select a file format.")
+        if not selected_options or all(opt.strip() == "" for opt in selected_options):
+            st.error("Please select a data layer.")
+        if not map_result.get("all_drawings"):
+            st.error("Please draw a rectangle on the map.")
 
 
 
