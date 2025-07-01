@@ -22,7 +22,6 @@ import matplotlib.patches as mpatches
 from PIL import ImageDraw, ImageFont
 from PIL import ImageChops
 from PIL import ImageOps
-import tifffile
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from shapely.geometry import box
 from pyproj import Transformer
@@ -54,59 +53,55 @@ ee.Initialize(credentials)
 #  streamlit app layout
 # ---------------------------------------------------------
 
-#html page configuration 
-st.markdown("""
-    <style>
-    /* Remove vertical padding */
-    .block-container {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-    }
-            
-    /* Remove more bottom padding */
-    .main {
-        padding-bottom: 0px !important;
-    }
-            
-    /* Set folium map size */
-    .folium-map {
-        max-height: 500px !important;
-        height: 500px !important;
-        overflow: hidden !important;
-    }
-            
-    /* Hides Streamlit header and footer */
-    footer, header, .stDeployButton {
-        display: none !important;
-    }
-
-    /* Remove scrollbars in sidebar */
-    section[data-testid="stSidebar"] {
-        overflow: hidden !important;
-        max-height: none !important;
-        width: 350px !important;  /* Optional: widen */
-    }
-    /* Disables sidebar overflow */
-    section[data-testid="stSidebar"] > div {
-        overflow: hidden !important;
-    }
-
-    /*  Removes more scrollbars */
-    .css-1d391kg {  /* This class may vary, update if needed */
-        overflow: hidden !important;
-        max-height: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-#create title
-st.markdown(
-    '<h1 style="font-size:28px;">Bristol Bay Wildfire Management Data Tool</h1>', 
-    unsafe_allow_html=True
-)
-
-#everything resides in this container
+#everything resides in this container, helps to reduce padding
 with st.container():
+
+    #html page configuration 
+    st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+    
+    st.markdown("""
+        <style>
+        /* Reduce top and bottom padding in main layout */
+        .block-container {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+
+        /* Reduce space under folium map */
+        .element-container:has(.folium-map),
+        iframe {
+            margin-bottom: 0px !important;
+        }
+
+        /* Control folium map height */
+        .folium-map {
+            height: 500px !important;
+            overflow: hidden !important;
+        }
+
+        /* Hide Streamlit branding/footer */
+        footer, header, .stDeployButton {
+            display: none !important;
+        }
+
+        /* Customize sidebar appearance */
+        section[data-testid="stSidebar"] {
+            overflow: hidden !important;
+            max-height: none !important;
+            width: 350px !important;
+        }
+
+        section[data-testid="stSidebar"] > div {
+            overflow: hidden !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    #create title
+    st.markdown(
+        '<h1 style="font-size:28px;">Bristol Bay Wildfire Management Data Tool</h1>', 
+        unsafe_allow_html=True
+    )
 
     # ---------------------------------------------------------
     #  define metadata - title, ee_image, colors, labels, credits
@@ -114,27 +109,28 @@ with st.container():
     recipe = {
             "Ownership": {
                 "Title": "Land Ownership",
-                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/owner_raster').select('b1'),
+                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/own_reproj').select('b1'),
                 "colors": {
-                    0: (189, 190, 190), 1: (141, 211, 199),  2: (255, 255, 179),  3: (190, 186, 218),
-                    4: (251, 128, 114),  5: (128, 177, 211),  6: (253, 180, 98),
-                    7: (179, 222, 105),  8: (252, 205, 229),  9: (255, 237, 111),
-                    10: (188, 128, 189), 11: (204, 235, 197), 12: (178, 178, 178),
-                    13: (177,  89,  40)
-                },
+                    0: (255, 255, 255),   1: (141, 211, 199),   2: (255, 255, 179),   3: (190, 186, 218),
+                    4: (251, 128, 114),     5: (128, 177, 211),   6: (253, 180, 98),    7: (179, 222, 105),
+                    8: (252, 205, 229),     9: (139, 130, 130),   10: (204, 204, 204),  11: (204, 235, 197),
+                    12: (255, 222, 111),  13: (91, 180, 199)
+                                    },
                 "labels": {
                     0: "No Data", 1: "BLM", 2: "Air Force", 3: "Army",
-                    4: "FWS", 5: "State", 6: "Local Government", 7: "Private", 8: "Undetermined",
-                    9: "Alaska Native Allotment", 10: "Alaska Native Lands", 11: "NPS", 12: "FAA", 13: "USPS"
+                    4: "FWS", 5: "National Park Service", 6: "State", 7: "Local Government", 8: "Private",
+                    9: "FAA", 10: "Undetermined", 11: "USPS", 12: "Alaska Native Allotment", 13: "Alaska Native Lands"
                 }, 
                 "credits" : "Data Source: Bureau of Land Management, Alaska. n.d. "
                 "BLM AK Administered Lands. ArcGIS Hub. Accessed April 01, 2025. "
-                "https://gbp-blm-egis.hub.arcgis.com/datasets/BLM-EGIS::blm-ak-administered-lands/about."
+                "https://gbp-blm-egis.hub.arcgis.com/ \n"
+                "datasets/BLM-EGIS::blm-ak \n"
+                "-administered-lands/about."
             },
 
             "Land Cover": {
                 "Title": "LANDFIRE Land Cover",
-                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/landcover').select('b1'),
+                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/landc_repro').select('b1'),
                 "colors": {
                     0: (255, 255, 255), 1: (255, 255, 255),  2: (0, 0, 255), 3: (159, 161, 240), 
                     4: (253, 204, 211), 5: (255, 122, 143), 6: (1, 1, 1),       
@@ -158,88 +154,36 @@ with st.container():
 
             "Fire Return Interval": {
                 "Title": "LANDFIRE Fire Return Interval",
-                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/FRI2').select('b1'),
+                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/fri_repro').select('b1'),
                 "colors": {
-                    # -9999 / No Data
-                    0: (189, 190, 190), 
-                    16350: (255, 255, 255), 16370: (255, 255, 255), 16380: (255, 255, 255),
-                    16390: (255, 255, 255), 16400: (255, 255, 255), 16430: (255, 255, 255),
-                    16441: (255, 255, 255), 16443: (255, 255, 255), 16450: (255, 255, 255),
-                    16470: (255, 255, 255), 16510: (255, 255, 255), 16520: (255, 255, 255),
-                    16550: (255, 255, 255), 16560: (255, 255, 255), 16610: (255, 255, 255),
-                    16630: (255, 255, 255), 16650: (255, 255, 255), 16680: (255, 255, 255),
-                    16810: (255, 255, 255), 16850: (255, 255, 255), 16870: (255, 255, 255),
-                    16880: (255, 255, 255), 16970: (255, 255, 255), 16990: (255, 255, 255),
-                    17020: (255, 255, 255), 1760: (255, 255, 255), 17090: (255, 255, 255),
-                    17130: (255, 255, 255), 17140: (255, 255, 255), 17200: (255, 255, 255),
-                    17220: (255, 255, 255), 11: (255, 255, 255), 12: (255, 255, 255),
-                    31: (255, 255, 255), 4428: (255, 255, 255), 4432: (255, 255, 255),
-                    4434: (255, 255, 255), 4455: (255, 255, 255), 4458: (255, 255, 255),
-                    4963: (255, 255, 255), 4965: (255, 255, 255), 7669: (255, 255, 255),
-                    7733: (255, 255, 255), 7737: (255, 255, 255), 16200: (255, 255, 255),
-
-                    # 100–149 years
-                    16041: (252, 141, 89), 16120: (252, 141, 89), 16210: (252, 141, 89), 16230: (252, 141, 89),
-
-                    # 150–199 years
-                    16030: (254, 224, 139), 16050: (254, 224, 139), 16281: (254, 224, 139),
-                    16011: (254, 224, 139), 16042: (254, 224, 139), 16061: (254, 224, 139),
-                    16101: (254, 224, 139),
-
-                    # 200–299 years
-                    16013: (255, 255, 191), 16822: (255, 255, 191), 16150: (255, 255, 191),
-                    16012: (255, 255, 191), 16141: (255, 255, 191),
-
-                    # 300–499 years
-                    16160: (217, 239, 139), 16180: (217, 239, 139), 16102: (217, 239, 139),
-                    16330: (217, 239, 139), 16240: (217, 239, 139),
-
-                    # 500–999 years
-                    16790: (145, 207, 96), 16142: (145, 207, 96), 16091: (145, 207, 96),
-                    16110: (145, 207, 96), 16090: (145, 207, 96),
-
-                    # 1000+ years
-                    16902: (26, 152, 80), 16292: (26, 152, 80), 16282: (26, 152, 80)
+                    1: (255, 255, 255), #No data
+                    2: (234, 89, 58), # 100–149 years
+                    3: (253, 191, 111), # 150–199 years
+                    4: (183, 224, 117), # 200–299 years
+                    5: (77, 177, 93), # 300–499 years 
+                    6: (77, 177, 93), # 500–999 years
+                    7: (0, 104, 55) # 500–999 years
                 },
+
                 "labels": {
                     # No Data
-                    0: 'No Data', 
-                    **{k: "No Data" for k in [
-                        16350, 16370, 16380, 16390, 16400, 16430, 16441, 16443, 16450, 16470,
-                        16510, 16520, 16550, 16560, 16610, 16630, 16650, 16680, 16810, 16850,
-                        16870, 16880, 16970, 16990, 17020, 1760, 17090, 17130, 17140, 17200,
-                        17220, 11, 12, 31, 4428, 4432, 4434, 4455, 4458, 4963, 4965, 7669, 7733,
-                        7737, 16200
-                    ]},
-
-                    # 100–149 years
-                    **{k: "100–149 years" for k in [16041, 16120, 16210, 16230]},
-
-                    # 150–199 years
-                    **{k: "150–199 years" for k in [16030, 16050, 16281, 16011, 16042, 16061, 16101]},
-
-                    # 200–299 years
-                    **{k: "200–299 years" for k in [16013, 16822, 16150, 16012, 16141]},
-
-                    # 300–499 years
-                    **{k: "300–499 years" for k in [16160, 16180, 16102, 16330, 16240]},
-
-                    # 500–999 years
-                    **{k: "500–999 years" for k in [16790, 16142, 16091, 16110, 16090]},
-
-                    # 1000+ years
-                    **{k: "1000+ years" for k in [16902, 16292, 16282]},
+                    1: 'No Data', 
+                    2: '100–149 years', 
+                    3: '150–199 years', 
+                    4: '200–299 years',
+                    5: '300–499 years',
+                    6: '500–999 years',
+                    7: '1000+ years'
                 },
 
                 "credits": "Data source: LANDFIRE, 2023, Fire Return Interval,"
                 "LANDFIRE 2.0.0, U.S. Department of the Interior, Geological Survey, "
-                "and U.S. Department of Agriculture. Accessed 01 April 2025 at http://www.landfire/viewer."
-                    
+                "and U.S. Department of Agriculture. Accessed 01 April 2025 at http://www.landfire/viewer."  
             },
 
             "Flammability Hazard": {
                 "Title": "Flammability Hazard",
-                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/haz_veg').select('b1'),
+                "ee_image": ee.Image('projects/ee-azirkes1/assets/AK_proj/haz_repro_rec').select('b1'),
                 "colors": {
                     0: (189, 190, 190), 1: (101, 171, 20), 2: (196, 227, 29), 3: (249, 223, 26), 
                     4: (255, 154, 11), 5: (252, 59, 9)
@@ -286,9 +230,10 @@ with st.container():
             unsafe_allow_html=True
         )
 
-    options_filetype = '.tif', '.pdf'
+    
 
     #data format multiselect
+    options_filetype = '.tif', '.pdf'
     with st.sidebar:
         selected_filetype = st.multiselect(
             "What format do you want the data in?",
@@ -327,12 +272,6 @@ with st.container():
             return False
         return True
 
-    #initialize session state
-    if "drawn_features_temp" not in st.session_state:
-        st.session_state["drawn_features_temp"] = []
-    if "drawn_features_committed" not in st.session_state:
-        st.session_state["drawn_features_committed"] = []
-
     #create folium map 
     m = folium.Map(location=[58.5, -157],control_scale = True, zoom_start=6, attr_control=False)
     
@@ -369,7 +308,7 @@ with st.container():
     vector_data = response.json()
     
    #add cluster to manage many popups
-    cluster = MarkerCluster(name="Native Place Names")
+    cluster = MarkerCluster(name="Place Names")
     cluster.add_to(m)
 
     #add markers directly to the cluster 
@@ -394,6 +333,7 @@ with st.container():
             popup=folium.Popup(popup_html, max_width=300)
         ).add_to(cluster)
 
+    #add drawing tools to the map
     draw = Draw(
             draw_options={
                 "polyline": False,
@@ -406,11 +346,7 @@ with st.container():
             edit_options={"edit": True, "remove": True},
         )
     draw.add_to(m)
-        
-    #add drawings to map
-    for feature in st.session_state["drawn_features_committed"]:
-        folium.GeoJson(feature, name="Drawn Feature").add_to(m)
-
+    
     #get bbnc boundary from Google Earth Engine 
     bbnc = ee.FeatureCollection('projects/ee-azirkes1/assets/AK_proj/bbnc_boundary')
 
@@ -432,10 +368,6 @@ with st.container():
     
     #render map and capture drawing events
     map_result = st_folium(m, height=500, width=700, returned_objects=["all_drawings"])
-
-    #store all drawing data temporarily, but do NOT update committed data yet
-    if map_result and map_result.get("all_drawings"):
-        st.session_state["drawn_features_temp"] = map_result["all_drawings"]  # directly assign the list
 
     # ---------------------------------------------------------
     #  main function, returns pdf, tif, metadata
@@ -590,7 +522,7 @@ with st.container():
         def create_locator_map(clipped_geom, width=450, height=450, dpi=150): 
         
             # Get full and clipped bounds from GEE using owner_raster and clipped_geom
-            full_extent = ee.Image('projects/ee-azirkes1/assets/AK_proj/owner_raster').geometry()
+            full_extent = ee.Image('projects/ee-azirkes1/assets/AK_proj/own_reproj').geometry()
             full_bounds = full_extent.bounds().getInfo()['coordinates'][0]
             clip_bounds = clipped_geom.bounds().getInfo()['coordinates'][0]
 
@@ -759,30 +691,6 @@ with st.container():
         # ---------------------------------------------------------
         #  set up TIF helper functions 
         # ---------------------------------------------------------
-
-        #function to extract metadata from recipe 
-        def extract_metadata_from_recipe(recipe, layer_name):
-
-            #looks for layer_name in recipe
-            matched_key = next((k for k in recipe if k.strip().lower() == layer_name.strip().lower()), None)
-            if matched_key is None:
-                raise ValueError(f"No matching key found for '{layer_name}' in recipe")
-
-            layer_recipe = recipe[matched_key]
-            
-            #get labels and credits
-            labels = layer_recipe.get("labels", {})
-            credits = layer_recipe.get("credits", "")
-            
-            # Concatenate class info if needed
-            class_info = "; ".join([f"{k}: {v}" for k, v in labels.items()])
-            
-            metadata = {
-                "Title": layer_name,
-                "Classes": class_info,
-                "Credits": credits
-            }
-            return metadata
         
         #function to write metadata dext file 
         def generate_text_metadata_file(recipe: dict, layer_name: str) -> bytes:
@@ -830,15 +738,20 @@ with st.container():
         #create metadata text file 
         txt_bytes = generate_text_metadata_file(recipe, layer_name) 
 
-        #download data from Google Earth Engine 
-        img_ee = layer_recipe["ee_image"].clip(roi).unmask(0)
+        #get image to google earth engine and cast to int
+        img_ee = layer_recipe["ee_image"].clip(roi).unmask(0).toInt()
+
+        #generate download URL with nearest resampling
         tiff_url = img_ee.getDownloadURL({
             'scale': 30,
             'crs': 'EPSG:3338',
-            'region': geometry,
-            'filePerBand': False
+            'region': roi.getInfo()['coordinates'],
+            'filePerBand': False,
+            'formatOptions': {
+                'resampling': 'nearest'
+            }
         })
-
+            
         #sends HTTP GET request and returns ZIP file
         response = requests.get(tiff_url)
 
@@ -864,6 +777,7 @@ with st.container():
         # ---------------------------------------------------------
         #  reproject tif 
         # ---------------------------------------------------------
+        
         #wraps tif_bytes into in-memory file
         with MemoryFile(io.BytesIO(original_tif)) as mem: 
             #opens tif file and reads it 
@@ -892,7 +806,7 @@ with st.container():
                     src.crs, dst_crs, src.width, src.height, *src.bounds
                 )
 
-            # Update the profile with CRS and transform
+            #update the profile with CRS and transform
                 profile.update({
                     'driver': 'GTiff',
                     'height': height,
@@ -903,8 +817,10 @@ with st.container():
                     'transform': transform,
                 })
 
+                #create empty base file
                 destination = np.empty((height, width), dtype=src.dtypes[0])
 
+                #reproject
                 reproject(
                     source=src.read(1),
                     destination=destination,
@@ -928,7 +844,7 @@ with st.container():
             with MemoryFile(io.BytesIO(tif_bytes)) as mem:
                 with mem.open() as src:
                 
-                    # --- create main map ---
+                    #read the band and create a mask for nodata values
                     band = src.read(1)
                     nodata = src.nodata or 0
                     masked_band = np.ma.masked_equal(band, nodata) #create mask that excludes nodata
@@ -975,7 +891,7 @@ with st.container():
                     gl.xlabel_style = {'size': 10}
                     gl.ylabel_style = {'size': 10}
 
-                    # Estimate image width in pixels
+                    #estimate image width in pixels
                     width = src.width
                     height = src.height
 
@@ -991,7 +907,8 @@ with st.container():
             # ---------------------------------------------------------
             #  build legend and locator map
             # ---------------------------------------------------------
-            present = set(np.unique(band)) #get present classes
+            #get present classes
+            present = set(np.unique(band)) 
 
             #create legend and locator
             legend_img = build_legend_image(cmap, labels, present, map_img.height)
@@ -1001,7 +918,7 @@ with st.container():
             legend_img = trim_whitespace(legend_img)
             locator_img = trim_whitespace(locator_img)
 
-            # Pad smaller width to match wider one 
+            #pad smaller width to match wider one 
             legend_w, locator_w = legend_img.width, locator_img.width #get widths
             target_width = max(legend_w, locator_w) #get max width
             if legend_w < target_width:
@@ -1074,6 +991,7 @@ with st.container():
     # ---------------------------------------------------------
     # access draw data and combine clipped data into zip folder
     # ---------------------------------------------------------
+    
     #error if no filetype selected
     if not selected_filetype:
         st.error("Please select a file format.")
@@ -1082,24 +1000,28 @@ with st.container():
     if not selected_options: 
         st.error("Please select a data layer.")
 
-    zip_buffer = None  # default to None
-
     #access drawings
     all_drawings = map_result.get("all_drawings", [])
+    
+    #error if no drawings, access last drawing, geometry, and polygon
+    if all_drawings:
+        last_drawing = all_drawings[-1]  # get the last drawn shape
+        geometry = last_drawing.get("geometry", None)
+        if geometry is None:
+            st.error("Please draw a rectangle boundary on the map.")
+        else:
+            polygon = ee.Geometry.Polygon(geometry["coordinates"])
 
-    if all_drawings and len(all_drawings) > 0:
-        #get geometry and coordinates from the first drawing
-        first_feature = all_drawings[0]
-        geometry = first_feature["geometry"]
-        coordinates = geometry["coordinates"]
+        #get bbnc geometry
+        bbnc_geom = bbnc.geometry()
 
-        #create Google Earth Engine polygon from coordinates
-        polygon = ee.Geometry.Polygon(coordinates)
+        #error if drawing is outside BBNC boundary 
+        if not bbnc_geom.contains(polygon).getInfo():
+            st.error("Your drawing is outside the BBNC boundary. Please draw within the designated area.")
+            st.stop()
 
-        #commit the drawings in session state before export
-        st.session_state["drawn_features_committed"] = all_drawings.copy()
-
-        
+        #set up memory objects
+        zip_buffer = None  # default to None
         zip_buffer = io.BytesIO()
         all_metadata = []
 
@@ -1122,6 +1044,7 @@ with st.container():
             if all_metadata:
                 joined_metadata = "\n\n".join(all_metadata)
                 z.writestr("metadata.txt", joined_metadata.encode("utf-8"))
+                
         zip_buffer.seek(0)
 
         #create download button
@@ -1133,8 +1056,7 @@ with st.container():
         )
 
     else:
-        st.warning("No drawings found. Please draw on the map first.")
-
+        st.error("Please draw a rectangle on the map.")
 
 
 
