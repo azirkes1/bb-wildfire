@@ -1,8 +1,9 @@
-# 🎈 Blank app template
+# Wildfire Management Data Clipping App 
 
-A simple Streamlit app template for you to modify!
+Created in fulfillment of the requirements for the 
+Environmental Observation and Informatics (EOI) M.S. degree 
+at the University of Wisconsin – Madison. 
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
 
 ### How to run it on your own machine
 
@@ -15,5 +16,5 @@ A simple Streamlit app template for you to modify!
 2. Run the app
 
    ```
-   $ streamlit run streamlit_app.py
+   $ streamlit run bb-wildfire.py
    ```
